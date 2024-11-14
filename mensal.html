@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fechamento Mensal de Receitas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        .tabs {
+            margin-top: 30px;
+            width: 100%;
+        }
+        .tabs button {
+            width: 49%;
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #ddd;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .tabs button:hover {
+            background-color: #ccc;
+        }
+        .monthly-summary {
+            display: block;
+            margin-top: 20px;
+        }
+        .monthly-entry {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .total {
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        button.remove {
+            background-color: #dc3545;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        button.remove:hover {
+            background-color: #c82333;
+        }
+        footer {
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+}
+
+footer {
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+}
+
+footer .social-icons {
+    margin-top: 10px;
+}
+
+footer .social-icons a {
+    margin: 0 10px;
+    font-size: 2em;  /* Tamanho do ícone */
+    color: #333;     /* Cor do ícone */
+    text-decoration: none;
+}
+
+footer .social-icons a:hover {
+    color: #28a745; /* Cor ao passar o mouse sobre o ícone */
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Fechamento Mensal de Receitas</h1>
+
+        <div class="tabs">
+            <button onclick="location.href='diario.html'">Controle Diário</button>
+        </div>
+
+        <div class="monthly-summary" id="monthlyEntries"></div>
+
+        <div class="total" id="totalSummary">
+            <p>Total Salário: R$ 0,00</p>
+            <p>Total Investimento: R$ 0,00</p>
+            <p>Total Reserva: R$ 0,00</p>
+        </div>
+    </div>
+    <footer>
+        Desenvolvido por <strong>Ronaldo Silva dos Santos</strong><br>
+        <div class="social-icons">
+            <a href="https://www.instagram.com/rony_silva79/" target="_blank" class="fab fa-instagram"></a>
+            <a href="https://wa.me/73991161995" target="_blank" class="fab fa-whatsapp"></a>
+        </div>
+    </footer>
+    
+    
+
+    <script>
+        const currentYear = new Date().getFullYear();
+        const currentMonth = new Date().getMonth() + 1;
+
+        function displayMonthlySummary() {
+            const monthlyData = JSON.parse(localStorage.getItem('monthlyData')) || {};
+            const entries = monthlyData[currentYear]?.[currentMonth] || [];
+
+            const monthlyEntriesDiv = document.getElementById('monthlyEntries');
+            const totalSummaryDiv = document.getElementById('totalSummary');
+            let totalSalary = 0;
+            let totalInvestment = 0;
+            let totalReserve = 0;
+
+            monthlyEntriesDiv.innerHTML = '';
+
+            if (entries.length === 0) {
+                monthlyEntriesDiv.innerHTML = '<p>Não há registros para este mês.</p>';
+                totalSummaryDiv.innerHTML = '<p>Total Salário: R$ 0,00</p><p>Total Investimento: R$ 0,00</p><p>Total Reserva: R$ 0,00</p>';
+                return;
+            }
+
+            entries.forEach((entry, index) => {
+                totalSalary += entry.salary;
+                totalInvestment += entry.investment;
+                totalReserve += entry.reserve;
+
+                const entryDiv = document.createElement('div');
+                entryDiv.classList.add('monthly-entry');
+                entryDiv.innerHTML = `
+                    <strong>${entry.date}</strong><br>
+                    Salário: R$ ${entry.salary.toFixed(2)}<br>
+                    Investimento: R$ ${entry.investment.toFixed(2)}<br>
+                    Reserva: R$ ${entry.reserve.toFixed(2)}<br>
+                    <button class="remove" onclick="removeEntry(${index})">Excluir</button>
+                `;
+                monthlyEntriesDiv.appendChild(entryDiv);
+            });
+
+            totalSummaryDiv.innerHTML = `
+                <p>Total Salário: R$ ${totalSalary.toFixed(2)}</p>
+                <p>Total Investimento: R$ ${totalInvestment.toFixed(2)}</p>
+                <p>Total Reserva: R$ ${totalReserve.toFixed(2)}</p>
+            `;
+        }
+
+        function removeEntry(index) {
+            let monthlyData = JSON.parse(localStorage.getItem('monthlyData')) || {};
+            if (monthlyData[currentYear] && monthlyData[currentYear][currentMonth]) {
+                monthlyData[currentYear][currentMonth].splice(index, 1);
+            }
+            localStorage.setItem('monthlyData', JSON.stringify(monthlyData));
+            displayMonthlySummary();
+        }
+
+        displayMonthlySummary();
+    </script>
+
+</body>
+</html>

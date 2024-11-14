@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Diário de Receitas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 1rem;
+            outline: none;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .tabs {
+            margin-top: 30px;
+            width: 100%;
+        }
+        .tabs button {
+            width: 49%;
+            padding: 10px;
+            font-size: 1rem;
+            background-color: #ddd;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .tabs button:hover {
+            background-color: #ccc;
+        }
+        #chartContainer {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 20px;
+        }
+        .daily-summary {
+            display: block;
+            margin-top: 20px;
+        }
+        .daily-entry {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        footer {
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+}
+
+footer {
+    margin-top: 40px;
+    font-size: 0.9em;
+    color: #555;
+    text-align: center;
+}
+
+footer .social-icons {
+    margin-top: 10px;
+}
+
+footer .social-icons a {
+    margin: 0 10px;
+    font-size: 2em;  /* Tamanho do ícone */
+    color: #333;     /* Cor do ícone */
+    text-decoration: none;
+}
+
+footer .social-icons a:hover {
+    color: #28a745; /* Cor ao passar o mouse sobre o ícone */
+}
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Controle Diário de Receitas</h1>
+        <input type="number" id="dailyIncome" placeholder="Digite o valor feito no dia">
+        <button onclick="addIncome()">Adicionar Receita</button>
+
+        <div id="chartContainer">
+            <canvas id="myChart"></canvas>
+        </div>
+
+        <div class="tabs">
+            <button onclick="location.href='mensal.html'">Fechamento Mensal</button>
+        </div>
+
+        <div id="daily" class="daily-summary">
+            <h3>Receitas de Cada Dia</h3>
+            <div id="dailyEntries"></div>
+        </div>
+    </div>
+    <footer>
+        Desenvolvido por <strong>Ronaldo Silva dos Santos</strong><br>
+        <div class="social-icons">
+            <a href="https://www.instagram.com/rony_silva79/" target="_blank" class="fab fa-instagram"></a>
+            <a href="https://wa.me/73991161995" target="_blank" class="fab fa-whatsapp"></a>
+        </div>
+    </footer>
+    
+    
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chart;
+        const currentMonth = new Date().getMonth() + 1; // Mês atual (1 a 12)
+        const currentYear = new Date().getFullYear(); // Ano atual
+
+        function addIncome() {
+            const dailyIncome = parseFloat(document.getElementById('dailyIncome').value);
+            if (isNaN(dailyIncome) || dailyIncome <= 0) {
+                alert("Por favor, insira um valor válido.");
+                return;
+            }
+
+            const salary = dailyIncome * 0.4;
+            const investment = dailyIncome * 0.4;
+            const reserve = dailyIncome * 0.2;
+
+            // Armazenar receita do dia com a data
+            const date = new Date().toLocaleDateString('pt-BR');
+            const dailyData = {
+                date: date,
+                salary: salary,
+                investment: investment,
+                reserve: reserve
+            };
+            saveDailyData(dailyData);
+
+            // Atualizar a interface
+            document.getElementById('dailyIncome').value = '';
+            updateChart(salary, investment, reserve);
+        }
+
+        function saveDailyData(dailyData) {
+            let monthlyData = JSON.parse(localStorage.getItem('monthlyData')) || {};
+            if (!monthlyData[currentYear]) {
+                monthlyData[currentYear] = {};
+            }
+            if (!monthlyData[currentYear][currentMonth]) {
+                monthlyData[currentYear][currentMonth] = [];
+            }
+
+            monthlyData[currentYear][currentMonth].push(dailyData);
+            localStorage.setItem('monthlyData', JSON.stringify(monthlyData));
+
+            // Atualizar visualização diária
+            displayTodayData(dailyData);
+        }
+
+        function displayTodayData(dailyData) {
+            const dailyEntriesDiv = document.getElementById('dailyEntries');
+            const entryDiv = document.createElement('div');
+            entryDiv.classList.add('daily-entry');
+            entryDiv.innerHTML = `
+                <strong>${dailyData.date}</strong><br>
+                Salário: R$ ${dailyData.salary.toFixed(2)}<br>
+                Investimento: R$ ${dailyData.investment.toFixed(2)}<br>
+                Reserva: R$ ${dailyData.reserve.toFixed(2)}
+            `;
+            dailyEntriesDiv.appendChild(entryDiv);
+        }
+
+        function updateChart(salary, investment, reserve) {
+            const data = [salary, investment, reserve];
+            if (chart) {
+                chart.data.datasets[0].data = data;
+                chart.update();
+            } else {
+                const ctx = document.getElementById('myChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Salário', 'Investimento', 'Reserva'],
+                        datasets: [{
+                            data: data,
+                            backgroundColor: ['#4CAF50', '#FFA500', '#1E90FF'],
+                            hoverBackgroundColor: ['#45a049', '#e08e00', '#1c7cd6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            animateScale: true
+                        }
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
